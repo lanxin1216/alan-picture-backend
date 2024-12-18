@@ -41,8 +41,8 @@ knife4j:
 #    license-url: https://stackoverflow.com/
 #    terms-of-service-url: https://stackoverflow.com/
     group:
-      test1:
-        group-name: 默认分组
+      default:
+#        group-name: 默认分组
         api-rule: package
         api-rule-resources:
           - com.alan.alanpicturebackend.controller
