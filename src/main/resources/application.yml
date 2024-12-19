@@ -32,7 +32,7 @@ knife4j:
   enable: true
   openapi:
     title: alan云图库后端api文档
-    description: "alan云图库后端api文档"
+    description: "alan云图库后端api文档，"
     email: 2431064695@qq.com
     concat: alan
 #    url:
