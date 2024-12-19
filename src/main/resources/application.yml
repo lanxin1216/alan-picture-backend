@@ -17,13 +17,13 @@ spring:
 # mybatis-plus配置
 mybatis-plus:
   configuration:
-    map-underscore-to-camel-case: true
+    map-underscore-to-camel-case: false
     # 仅在开发环境打开日志
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   # 全局逻辑删除配置
   global-config:
     db-config:
-      logic-delete-field: is_delete  # 全局逻辑删除的实体字段名
+      logic-delete-field: isDelete  # 全局逻辑删除的实体字段名
       logic-delete-value: 1          # 逻辑已删除值(默认为 1)
       logic-not-delete-value: 0      # 逻辑未删除值(默认为 0)
 
@@ -32,7 +32,7 @@ knife4j:
   enable: true
   openapi:
     title: alan云图库后端api文档
-    description: "alan云图库后端api文档，"
+    description: "alan云图库后端api文档"
     email: 2431064695@qq.com
     concat: alan
 #    url:
