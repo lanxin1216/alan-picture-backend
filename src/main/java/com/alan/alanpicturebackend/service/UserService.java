@@ -1,12 +1,15 @@
 package com.alan.alanpicturebackend.service;
 
 import com.alan.alanpicturebackend.model.entity.User;
+import com.alan.alanpicturebackend.model.vo.LoginUserVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
-* @author 86187
-* @description 针对表【user(用户)】的数据库操作Service
-* @createDate 2024-12-19 22:34:05
+* @author alan
+* @Description: 针对表【user(用户)】的数据库操作Service
+* @Date: 2024-12-19 22:34:05
 */
 public interface UserService extends IService<User> {
 
@@ -26,4 +29,22 @@ public interface UserService extends IService<User> {
      * @return 加密后的密码
      */
     String getEncryptPassword(String userPassword);
+
+    /**
+     * 用户登录
+     *
+     * @param userAccount  用户账户
+     * @param userPassword 用户密码
+     * @param request 请求
+     * @return 脱敏后的用户信息
+     */
+    LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
+
+    /**
+     * 获取脱敏后的用户信息
+     *
+     * @param user 用户
+     * @return 脱敏后的用户信息
+     */
+    LoginUserVO getLoginUserVO(User user);
 }
