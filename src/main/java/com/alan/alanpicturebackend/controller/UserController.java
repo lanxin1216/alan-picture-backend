@@ -58,6 +58,7 @@ public class UserController {
 
     /**
      * 获取当前登录用户信息
+     *
      * @param request
      * @return
      */
@@ -65,6 +66,20 @@ public class UserController {
     public BaseResponse<LoginUserVO> getLoginUser(HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(userService.getLoginUserVO(loginUser));
+    }
+
+    /**
+     * 用户注销（退出登录）
+     *
+     * @param request 请求
+     * @return 返回结果
+     */
+    @PostMapping("/logout")
+    public BaseResponse<Boolean> userLogout(HttpServletRequest request) {
+        // 使用自定义工具类判断请求参数是否为 null
+        ThrowUtils.throwIf(request == null, ErrorCode.PARAMS_ERROR);
+        boolean result = userService.userLogout(request);
+        return ResultUtils.success(result);
     }
 
 }
