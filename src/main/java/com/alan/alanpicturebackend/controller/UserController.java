@@ -165,7 +165,7 @@ public class UserController {
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updateUser(UserUpdateRequest userUpdateRequest) {
+    public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest) {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -184,16 +184,29 @@ public class UserController {
      * @param userQueryRequest 查询请求参数
      * @return 返回查询的参数结果
      */
-    @GetMapping("/list/page/vo")
+    @PostMapping("/list/page/vo")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<UserVO>> listUserVOByPage(@RequestBody UserQueryRequest userQueryRequest) {
+        // 校验查询请求是否为空
         ThrowUtils.throwIf(userQueryRequest == null, ErrorCode.PARAMS_ERROR);
+
+        // 获取当前页码和页面大小
         long current = userQueryRequest.getCurrent();
         long pageSize = userQueryRequest.getPageSize();
+
+        // 执行用户列表的分页查询
         Page<User> userPage = userService.page(new Page<>(current, pageSize), userService.getQueryWrapper(userQueryRequest));
+
+        // 初始化用户视图对象的分页结果
         Page<UserVO> userVOPage = new Page<>(current, pageSize, userPage.getTotal());
+
+        // 将查询到的用户记录转换为用户视图对象列表
         List<UserVO> userVOList = userService.getUserVOList(userPage.getRecords());
+
+        // 设置用户视图对象的记录
         userVOPage.setRecords(userVOList);
+
+        // 返回用户视图对象的分页结果
         return ResultUtils.success(userVOPage);
     }
 
