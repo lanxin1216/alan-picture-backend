@@ -1,10 +1,14 @@
 package com.alan.alanpicturebackend.service;
 
+import com.alan.alanpicturebackend.model.dto.user.UserQueryRequest;
 import com.alan.alanpicturebackend.model.entity.User;
 import com.alan.alanpicturebackend.model.vo.LoginUserVO;
+import com.alan.alanpicturebackend.model.vo.UserVO;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * @author alan
@@ -64,4 +68,28 @@ public interface UserService extends IService<User> {
      * @return
      */
     boolean userLogout(HttpServletRequest request);
+
+    /**
+     * 获取脱敏的用户信息
+     *
+     * @param user 用户信息
+     * @return 脱敏后的用户信息
+     */
+    UserVO getUserVO(User user);
+
+    /**
+     * 获取脱敏的用户信息列表
+     *
+     * @param userList 用户列表
+     * @return 脱敏用户列表
+     */
+    List<UserVO> getUserVOList(List<User> userList);
+
+    /**
+     * 获取查询条件
+     *
+     * @param userQueryRequest 用户查询条件
+     * @return 查询条件
+     */
+    QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 }
