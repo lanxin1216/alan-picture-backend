@@ -6,6 +6,7 @@ import com.alan.alanpicturebackend.exception.ErrorCode;
 import com.alan.alanpicturebackend.exception.ThrowUtils;
 import com.alan.alanpicturebackend.model.dto.user.UserLoginRequest;
 import com.alan.alanpicturebackend.model.dto.user.UserRegisterRequest;
+import com.alan.alanpicturebackend.model.entity.User;
 import com.alan.alanpicturebackend.model.vo.LoginUserVO;
 import com.alan.alanpicturebackend.service.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -53,6 +54,17 @@ public class UserController {
         String userPassword = userLoginRequest.getUserPassword();
         LoginUserVO loginUserVO = userService.userLogin(userAccount, userPassword, request);
         return ResultUtils.success(loginUserVO);
+    }
+
+    /**
+     * 获取当前登录用户信息
+     * @param request
+     * @return
+     */
+    @GetMapping("/get/login")
+    public BaseResponse<LoginUserVO> getLoginUser(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(userService.getLoginUserVO(loginUser));
     }
 
 }
