@@ -6,6 +6,8 @@ server:
 spring:
   application:
     name: alan-picture-backend
+  profiles:
+    active: local
 
   # 数据库配置
   datasource:
@@ -46,3 +48,12 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.alan.alanpicturebackend.controller
+
+# 对象存储配置（需要从腾讯云获取）
+#cos:
+#  client:
+#    host: xxx
+#    secretId: xxx
+#    secretKey: xxx
+#    region: xxx
+#    bucket: xxx
