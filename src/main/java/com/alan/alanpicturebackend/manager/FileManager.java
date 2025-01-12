@@ -75,8 +75,9 @@ public class FileManager {
             // 计算文件宽度比
             double picScale = NumberUtil.round(picWidth * 1.0 / picHeight, 2).doubleValue();
 
-            uploadPictureResult.setUrl(cosClientConfig.getBucket() + "/" + uploadPath);
-            uploadPictureResult.setPicName(FileUtil.mainName(originFilename));
+            uploadPictureResult.setUrl(cosClientConfig.getHost() + "/" + uploadPath);
+//            uploadPictureResult.setPicName(FileUtil.mainName(originFilename));
+            uploadPictureResult.setPicName(uploadFilename);
             uploadPictureResult.setPicSize(FileUtil.size(file));
             uploadPictureResult.setPicWidth(picWidth);
             uploadPictureResult.setPicHeight(picHeight);

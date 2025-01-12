@@ -15,6 +15,10 @@ spring:
     url: jdbc:mysql://localhost:3306/alan_picture
     username: root
     password: 123456
+  # 开放更大的文件上传体积
+  servlet:
+    multipart:
+      max-file-size: 10MB
 
 # mybatis-plus配置
 mybatis-plus:
@@ -37,14 +41,14 @@ knife4j:
     description: "alan云图库后端api文档"
     email: 2431064695@qq.com
     concat: alan
-#    url:
+    #    url:
     version: v1.0
-#    license: Apache 2.0
-#    license-url: https://stackoverflow.com/
-#    terms-of-service-url: https://stackoverflow.com/
+    #    license: Apache 2.0
+    #    license-url: https://stackoverflow.com/
+    #    terms-of-service-url: https://stackoverflow.com/
     group:
       default:
-#        group-name: 默认分组
+        #        group-name: 默认分组
         api-rule: package
         api-rule-resources:
           - com.alan.alanpicturebackend.controller
