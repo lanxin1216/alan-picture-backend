@@ -1,5 +1,6 @@
 package com.alan.alanpicturebackend.controller;
 
+import cn.hutool.json.JSONUtil;
 import com.alan.alanpicturebackend.annotation.AuthCheck;
 import com.alan.alanpicturebackend.common.BaseResponse;
 import com.alan.alanpicturebackend.common.DeleteRequest;
@@ -8,12 +9,14 @@ import com.alan.alanpicturebackend.constant.UserConstant;
 import com.alan.alanpicturebackend.exception.BusinessException;
 import com.alan.alanpicturebackend.exception.ErrorCode;
 import com.alan.alanpicturebackend.exception.ThrowUtils;
+import com.alan.alanpicturebackend.model.dto.picture.PictureUpdateRequest;
 import com.alan.alanpicturebackend.model.dto.picture.PictureUploadRequest;
 import com.alan.alanpicturebackend.model.entity.Picture;
 import com.alan.alanpicturebackend.model.entity.User;
 import com.alan.alanpicturebackend.model.vo.PictureVO;
 import com.alan.alanpicturebackend.service.PictureService;
 import com.alan.alanpicturebackend.service.UserService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -76,6 +79,35 @@ public class PictureController {
         // 操作数据库
         boolean result = pictureService.removeById(id);
         ThrowUtils.throwIf(!result, ErrorCode.SYSTEM_ERROR, "图片删除异常");
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * 更新图片（仅管理员）
+     *
+     * @param pictureUpdateRequest 更新图片请求
+     * @return 返回结果
+     */
+    @PostMapping("/update")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest) {
+        if (pictureUpdateRequest == null || pictureUpdateRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 将参数DTO转换为实体类
+        Picture picture = new Picture();
+        BeanUtils.copyProperties(pictureUpdateRequest, picture);
+        // 将list 转换为string（主要是标签tag）
+        picture.setTags(JSONUtil.toJsonStr(pictureUpdateRequest.getTags()));
+        // 数据校验
+        pictureService.validPicture(picture);
+        // 判断图片是否存在
+        Long id = pictureUpdateRequest.getId();
+        Picture oldPicture = pictureService.getById(id);
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        // 操作数据库修改数据
+        boolean result = pictureService.updateById(picture);
+        ThrowUtils.throwIf(!result, ErrorCode.SYSTEM_ERROR, "更新图片错误");
         return ResultUtils.success(true);
     }
 }
