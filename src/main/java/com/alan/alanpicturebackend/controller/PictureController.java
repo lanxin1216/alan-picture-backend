@@ -163,7 +163,7 @@ public class PictureController {
      * @param pictureQueryRequest 分页请求
      * @return 返回详细分页列表
      */
-    @GetMapping("/list/page")
+    @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<Picture>> listPictureByPage(@RequestBody PictureQueryRequest pictureQueryRequest) {
         long current = pictureQueryRequest.getCurrent();
@@ -181,7 +181,7 @@ public class PictureController {
      * @param pictureQueryRequest 分页请求
      * @return 返回详细分页 VO 列表
      */
-    @GetMapping("/list/page/vo")
+    @PostMapping("/list/page/vo")
     public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
         long current = pictureQueryRequest.getCurrent();
         long size = pictureQueryRequest.getPageSize();
@@ -233,7 +233,7 @@ public class PictureController {
      * 获取标签和分类
      * - 先使用数组写死
      *
-     * @return
+     * @return 返回分类列表和标签列表
      */
     @GetMapping("/tag_category")
     public BaseResponse<PictureTagCategory> listPictureTagCategory() {
