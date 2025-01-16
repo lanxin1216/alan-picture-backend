@@ -169,7 +169,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 将对象拷贝过去，使用VO类对象中的方法
         PictureVO pictureVO = PictureVO.objToVo(picture);
         // 获取用户信息，查询图片关联的用户信息
-        Long userId = picture.getId();
+        Long userId = picture.getUserId();
         if (userId != null && userId > 0) {
             User user = userService.getById(userId); // 数据库获取到用户信息
             // 将用户信息转VO对象
