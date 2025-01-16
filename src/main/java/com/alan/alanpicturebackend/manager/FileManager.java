@@ -73,8 +73,7 @@ public class FileManager {
             double picScale = NumberUtil.round(picWidth * 1.0 / picHeight, 2).doubleValue();
 
             uploadPictureResult.setUrl(cosClientConfig.getHost() + "/" + uploadPath);
-//            uploadPictureResult.setPicName(FileUtil.mainName(originFilename));
-            uploadPictureResult.setPicName(uploadFilename);
+            uploadPictureResult.setPicName(FileUtil.mainName(originFilename));
             uploadPictureResult.setPicSize(FileUtil.size(file));
             uploadPictureResult.setPicWidth(picWidth);
             uploadPictureResult.setPicHeight(picHeight);
