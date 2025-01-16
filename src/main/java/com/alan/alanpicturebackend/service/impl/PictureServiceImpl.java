@@ -147,7 +147,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         queryWrapper.eq(ObjUtil.isNotEmpty(picScale), "picScale", picScale);
         // JSON 数组查询 查询是否包含 tag 列表中的标签
         /* 等同于：【~ and (tag like "%\"java\"%" and like "%\"javaAi\"%") */
-        if (CollUtil.isEmpty(tags)) {
+        if (CollUtil.isNotEmpty(tags)) {
             for (String tag : tags) {
                 queryWrapper.like("tags", "\"" + tag + "\"");
             }
