@@ -69,10 +69,16 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
         // 如果是存在id，则是更新图片，需要校验图片是否存在
         if (pictureId != null) {
-            boolean exists = this.lambdaQuery()
-                    .eq(Picture::getId, pictureId)
-                    .exists();
-            ThrowUtils.throwIf(!exists, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+            Picture oldPicture = this.getById(pictureId);
+//            boolean exists = this.lambdaQuery()
+//                    .eq(Picture::getId, pictureId)
+//                    .exists();
+//            ThrowUtils.throwIf(!exists, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+            ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+            // 仅本人或管理员可编辑
+            if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            }
         }
         // 上传图片，得到信息
         // 按照用户 id 划分目录
@@ -88,6 +94,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         picture.setPicScale(uploadPictureResult.getPicScale());
         picture.setPicFormat(uploadPictureResult.getPicFormat());
         picture.setUserId(loginUser.getId());
+        // 补充审核参数
+        fillReviewParams(picture, loginUser);
         // 如果 pictureId 不为空，表示更新，否则是新增
         if (pictureId != null) {
             // 如果是更新，需要补充 id 和编辑时间
@@ -137,6 +145,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                     .like("introduction", searchText)
             );
         }
+        // 审核信息
+        Integer reviewStatus = pictureQueryRequest.getReviewStatus();
+        String reviewMessage = pictureQueryRequest.getReviewMessage();
 
         // 填充 QueryWrapper 对象
         queryWrapper.eq(ObjUtil.isNotEmpty(id), "id", id);
@@ -149,6 +160,11 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         queryWrapper.eq(ObjUtil.isNotEmpty(picHeight), "picHeight", picHeight);
         queryWrapper.eq(ObjUtil.isNotEmpty(picSize), "picSize", picSize);
         queryWrapper.eq(ObjUtil.isNotEmpty(picScale), "picScale", picScale);
+        Long reviewerId = pictureQueryRequest.getReviewerId();
+        queryWrapper.eq(ObjUtil.isNotEmpty(reviewStatus), "reviewStatus", reviewStatus);
+        queryWrapper.like(StrUtil.isNotBlank(reviewMessage), "reviewMessage", reviewMessage);
+        queryWrapper.eq(ObjUtil.isNotEmpty(reviewerId), "reviewerId", reviewerId);
+
         // JSON 数组查询 查询是否包含 tag 列表中的标签
         /* 等同于：【~ and (tag like "%\"java\"%" and like "%\"javaAi\"%") */
         if (CollUtil.isNotEmpty(tags)) {
@@ -287,6 +303,25 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         updatePicture.setReviewTime(new Date());
         boolean result = this.updateById(updatePicture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "图片审核异常");
+    }
+
+    /**
+     * 补充审核参数-管理员自动过审
+     *
+     * @param picture   图片信息
+     * @param loginUser 登录用户
+     */
+    @Override
+    public void fillReviewParams(Picture picture, User loginUser) {
+        if (userService.isAdmin(loginUser)) {
+            // 管理员自动过审
+            picture.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+            picture.setReviewMessage("管理员自动过审");
+            picture.setReviewTime(new Date());
+        } else {
+            // 非管理员，创建或编辑都要修改为审核
+            picture.setReviewStatus(PictureReviewStatusEnum.REVIEWING.getValue());
+        }
     }
 }
 

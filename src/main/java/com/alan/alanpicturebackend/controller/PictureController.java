@@ -13,6 +13,7 @@ import com.alan.alanpicturebackend.exception.ThrowUtils;
 import com.alan.alanpicturebackend.model.dto.picture.*;
 import com.alan.alanpicturebackend.model.entity.Picture;
 import com.alan.alanpicturebackend.model.entity.User;
+import com.alan.alanpicturebackend.model.enums.PictureReviewStatusEnum;
 import com.alan.alanpicturebackend.model.vo.PictureTagCategory;
 import com.alan.alanpicturebackend.model.vo.PictureVO;
 import com.alan.alanpicturebackend.service.PictureService;
@@ -52,7 +53,7 @@ public class PictureController {
      * @return 返回上传的图片信息
      */
     @PostMapping("/upload")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+//    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<PictureVO> uploadPicture(@RequestParam("file") MultipartFile multipartFile,
                                                  PictureUploadRequest pictureUploadRequest,
                                                  HttpServletRequest httpServletRequest) {
@@ -82,6 +83,7 @@ public class PictureController {
         if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
+
         // 操作数据库
         boolean result = pictureService.removeById(id);
         ThrowUtils.throwIf(!result, ErrorCode.SYSTEM_ERROR, "图片删除异常");
@@ -96,7 +98,7 @@ public class PictureController {
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest) {
+    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest, HttpServletRequest request) {
         if (pictureUpdateRequest == null || pictureUpdateRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -111,6 +113,9 @@ public class PictureController {
         Long id = pictureUpdateRequest.getId();
         Picture oldPicture = pictureService.getById(id);
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        // 补充审核参数
+        User loginUser = userService.getLoginUser(request);
+        pictureService.fillReviewParams(picture, loginUser);
         // 操作数据库修改数据
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.SYSTEM_ERROR, "更新图片错误");
@@ -148,6 +153,10 @@ public class PictureController {
         // 查询数据
         Picture picture = pictureService.getById(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
+        // 判断是否过审了
+        if (!picture.getReviewStatus().equals(PictureReviewStatusEnum.PASS.getValue())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
         // 封装数据
         PictureVO pictureVO = pictureService.getPictureVO(picture, request);
         // 返回
@@ -184,6 +193,8 @@ public class PictureController {
         long size = pictureQueryRequest.getPageSize();
         // 限制查询条数最大值，防止爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        // 普通用户默认只能查看已过审的数据
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
         // 查询
         Page<Picture> objectPage = new Page<>(current, size);
         QueryWrapper<Picture> queryWrapper = pictureService.getQueryWrapper(pictureQueryRequest);
@@ -220,6 +231,8 @@ public class PictureController {
         if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
+        // 补充审核参数
+        pictureService.fillReviewParams(picture, loginUser);
         // 操作数据库
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
