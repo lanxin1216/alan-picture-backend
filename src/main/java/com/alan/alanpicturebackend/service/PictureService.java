@@ -1,6 +1,7 @@
 package com.alan.alanpicturebackend.service;
 
 import com.alan.alanpicturebackend.model.dto.picture.PictureQueryRequest;
+import com.alan.alanpicturebackend.model.dto.picture.PictureReviewRequest;
 import com.alan.alanpicturebackend.model.dto.picture.PictureUploadRequest;
 import com.alan.alanpicturebackend.model.entity.Picture;
 import com.alan.alanpicturebackend.model.entity.User;
@@ -64,5 +65,13 @@ public interface PictureService extends IService<Picture> {
      * @param picture 图片数据
      */
     void validPicture(Picture picture);
+
+    /**
+     * 图片审核
+     *
+     * @param pictureReviewRequest 审核请求
+     * @param loginUser            登录用户
+     */
+    void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser);
 
 }

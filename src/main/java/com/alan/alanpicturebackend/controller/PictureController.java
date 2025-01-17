@@ -10,10 +10,7 @@ import com.alan.alanpicturebackend.constant.UserConstant;
 import com.alan.alanpicturebackend.exception.BusinessException;
 import com.alan.alanpicturebackend.exception.ErrorCode;
 import com.alan.alanpicturebackend.exception.ThrowUtils;
-import com.alan.alanpicturebackend.model.dto.picture.PictureEditRequest;
-import com.alan.alanpicturebackend.model.dto.picture.PictureQueryRequest;
-import com.alan.alanpicturebackend.model.dto.picture.PictureUpdateRequest;
-import com.alan.alanpicturebackend.model.dto.picture.PictureUploadRequest;
+import com.alan.alanpicturebackend.model.dto.picture.*;
 import com.alan.alanpicturebackend.model.entity.Picture;
 import com.alan.alanpicturebackend.model.entity.User;
 import com.alan.alanpicturebackend.model.vo.PictureTagCategory;
@@ -245,5 +242,20 @@ public class PictureController {
         return ResultUtils.success(pictureTagCategory);
     }
 
+    /**
+     * 图片审核
+     *
+     * @param pictureReviewRequest 审核请求
+     * @param request              请求
+     * @return 返回审核结果
+     */
+    @PostMapping("/review")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> doPictureReview(@RequestBody PictureReviewRequest pictureReviewRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureReviewRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        pictureService.doPictureReview(pictureReviewRequest, loginUser);
+        return ResultUtils.success(true);
+    }
 
 }
