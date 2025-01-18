@@ -7,6 +7,9 @@ import com.alan.alanpicturebackend.exception.BusinessException;
 import com.alan.alanpicturebackend.exception.ErrorCode;
 import com.alan.alanpicturebackend.exception.ThrowUtils;
 import com.alan.alanpicturebackend.manager.FileManager;
+import com.alan.alanpicturebackend.manager.upload.FilePictureUpload;
+import com.alan.alanpicturebackend.manager.upload.PictureUploadTemplate;
+import com.alan.alanpicturebackend.manager.upload.UrlPictureUpload;
 import com.alan.alanpicturebackend.model.dto.file.UploadPictureResult;
 import com.alan.alanpicturebackend.model.dto.picture.PictureQueryRequest;
 import com.alan.alanpicturebackend.model.dto.picture.PictureReviewRequest;
@@ -43,22 +46,28 @@ import java.util.stream.Collectors;
 public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         implements PictureService {
 
-    @Resource
-    private FileManager fileManager;
+//    @Resource
+//    private FileManager fileManager;
 
     @Resource
     private UserService userService;
 
+    @Resource
+    private FilePictureUpload filePictureUpload;
+
+    @Resource
+    private UrlPictureUpload urlPictureUpload;
+
     /**
      * 图片上传
      *
-     * @param multipartFile        图片文件
+     * @param inputSource        图片文件或Url地址
      * @param pictureUploadRequest 图片上传请求
      * @param loginUser            上传用户
      * @return 上传的图片信息
      */
     @Override
-    public PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser) {
+    public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
         // 上传用户检验
         ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTH_ERROR);
 
@@ -83,7 +92,13 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 上传图片，得到信息
         // 按照用户 id 划分目录
         String uploadPathPrefix = String.format("public/%s", loginUser.getId());
-        UploadPictureResult uploadPictureResult = fileManager.uploadPicture(multipartFile, uploadPathPrefix);
+        // 需要根据 inputSource 类型区分上传方式
+        PictureUploadTemplate pictureUploadTemplate = filePictureUpload;
+        // 判断 inputSource 的类型
+        if (inputSource instanceof String) {
+            pictureUploadTemplate = urlPictureUpload;
+        }
+        UploadPictureResult uploadPictureResult = pictureUploadTemplate.uploadPicture(inputSource, uploadPathPrefix);
         // 构造要写入数据库的图片信息
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
