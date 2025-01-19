@@ -2,12 +2,20 @@ server:
   port: 8123
   servlet:
     context-path: /api
+  # 设置 cookie 1 天过期
+    session:
+      cookie:
+        max-age: 86400
 
 spring:
   application:
     name: alan-picture-backend
   profiles:
     active: local
+  # Session 配置
+  session:
+    store-type: redis
+    timeout: 86400 # session 1天过期
 
   # 数据库配置
   datasource:
@@ -15,6 +23,13 @@ spring:
     url: jdbc:mysql://localhost:3306/alan_picture
     username: root
     password: 123456
+  # Redis 配置
+  redis:
+    database: 0
+    host: 127.0.0.1
+    port: 6379
+    timeout: 5000
+
   # 开放更大的文件上传体积
   servlet:
     multipart:
