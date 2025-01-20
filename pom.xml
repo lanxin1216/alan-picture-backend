@@ -104,6 +104,23 @@
             <artifactId>jsoup</artifactId>
             <version>1.15.3</version>
         </dependency>
+
+        <!-- Thumbnailator 图像处理-->
+        <!-- https://mvnrepository.com/artifact/net.coobird/thumbnailator -->
+        <dependency>
+            <groupId>net.coobird</groupId>
+            <artifactId>thumbnailator</artifactId>
+            <version>0.4.20</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.sejda.imageio/webp-imageio -->
+        <!-- 添加 webp-imageio 依赖 -->
+        <dependency>
+            <groupId>org.sejda.imageio</groupId>
+            <artifactId>webp-imageio</artifactId>
+            <version>0.1.6</version>
+        </dependency>
+
     </dependencies>
     <dependencyManagement>
         <dependencies>

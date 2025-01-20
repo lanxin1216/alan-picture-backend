@@ -110,6 +110,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 构造要写入数据库的图片信息
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
+        picture.setPreviewUrl(uploadPictureResult.getPreviewUrl());
+        picture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
 
         // 封装姓名
         String picName = uploadPictureResult.getPicName();
