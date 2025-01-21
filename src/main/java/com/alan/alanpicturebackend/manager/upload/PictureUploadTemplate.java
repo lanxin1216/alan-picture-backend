@@ -8,6 +8,7 @@ import com.alan.alanpicturebackend.config.CosClientConfig;
 import com.alan.alanpicturebackend.exception.BusinessException;
 import com.alan.alanpicturebackend.exception.ErrorCode;
 import com.alan.alanpicturebackend.manager.CosManager;
+import com.alan.alanpicturebackend.manager.utils.PictureProcessUtils;
 import com.alan.alanpicturebackend.model.dto.file.UploadPictureResult;
 import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.ciModel.persistence.ImageInfo;
@@ -31,6 +32,9 @@ public abstract class PictureUploadTemplate {
     @Resource
     protected CosClientConfig cosClientConfig;
 
+    @Resource
+    private PictureProcessUtils pictureProcessUtils;
+
     /**
      * 模板方法，定义上传流程
      *
@@ -47,34 +51,57 @@ public abstract class PictureUploadTemplate {
         String uuid = RandomUtil.randomString(16);
         /* 获取文件的原始文件名 */
         String originFilename = getOriginFilename(inputSource);
-//        String fileSuffix = FileUtil.getSuffix(originFilename);  // 文件后缀
-//        String uploadTime = DateUtil.formatDate(new Date());   // 上传时间
-//        String uploadFilename = String.format("%S_%S.%S", uploadTime, uuid, fileSuffix);
-        String uploadFilename = String.format("%s_%s.%s", DateUtil.formatDate(new Date()), uuid,
-                FileUtil.getSuffix(originFilename));
+        String originFileSuffix = FileUtil.getSuffix(originFilename);
+        String uploadTime = DateUtil.formatDate(new Date());   // 上传时间
+
+        // 原始图片上传图片名称
+        String uploadFilename = String.format("%s_%s.%s", uploadTime, uuid, originFileSuffix);
+        // 缩略图名称
+        String thumbnailImageName = String.format("%s_%s_thumbnail.%s", uploadTime, uuid, originFileSuffix);
+        // 压缩图
+        String previewImageName = String.format("%s_%s_preview.webp", uploadTime, uuid);
+
         // 上传路径
         String uploadPath = String.format("/%s/%s", uploadPathPrefix, uploadFilename);
+        String thumbnailImagePath = String.format("/%s/%s", uploadPathPrefix, thumbnailImageName);
+        String previewImagePath = String.format("/%s/%s", uploadPathPrefix, previewImageName);
 
-        File file = null;
+        File originalFile = null;
+        File thumbnailImage = null; // 缩略图
+        File previewImage = null;  // 压缩图（预览图）
         try {
             // 3. 创建临时文件
-            file = File.createTempFile(uploadPath, null);
+            originalFile = File.createTempFile( "originalImage", "." + originFileSuffix);
+            thumbnailImage = File.createTempFile("thumbnailImage", "." + originFileSuffix);
+            previewImage = File.createTempFile("previewImage", ".webp");
 
             /* 处理文件来源（本地或 URL） */
-            processFile(inputSource, file);
+            processFile(inputSource, originalFile);
+
+            /* 处理图片 */
+            // 1). 生成缩略图
+            pictureProcessUtils.toThumbnailImage(originalFile, thumbnailImage);
+
+            // 2). 生成压缩图（webp）
+            pictureProcessUtils.toPreviewImage(originalFile, previewImage);
 
             // 4. 上传图片到对象存储
-            PutObjectResult putObjectResult = cosManager.putPictureObject(uploadPath, file);
+            // 1) 原图
+            PutObjectResult putObjectResult = cosManager.putPictureObject(uploadPath, originalFile);
             ImageInfo imageInfo = putObjectResult.getCiUploadResult().getOriginalInfo().getImageInfo();
+            // 2）缩略图
+            cosManager.putObject(thumbnailImagePath, thumbnailImage);
+            // 3）压缩图（webp）
+            cosManager.putObject(previewImagePath, previewImage);
 
             // 5. 封装返回结果
-            return buildResult(originFilename, file, uploadPath, imageInfo);
+            return buildResult(originFilename, originalFile, uploadPath, imageInfo, thumbnailImagePath, previewImagePath);
         } catch (Exception e) {
             log.error("图片上传到对象存储失败", e);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "上传失败");
         } finally {
             // 6. 清理临时文件
-            deleteTempFile(file);
+            deleteTempFile(originalFile, thumbnailImage, previewImage);
         }
     }
 
@@ -96,7 +123,8 @@ public abstract class PictureUploadTemplate {
     /**
      * 封装返回结果
      */
-    private UploadPictureResult buildResult(String originFilename, File file, String uploadPath, ImageInfo imageInfo) {
+    private UploadPictureResult buildResult(String originFilename, File file, String uploadPath,
+                                            ImageInfo imageInfo, String thumbnailImagePath, String previewImagePath) {
         UploadPictureResult uploadPictureResult = new UploadPictureResult();
         int picWidth = imageInfo.getWidth();
         int picHeight = imageInfo.getHeight();
@@ -108,19 +136,23 @@ public abstract class PictureUploadTemplate {
         uploadPictureResult.setPicFormat(imageInfo.getFormat());
         uploadPictureResult.setPicSize(FileUtil.size(file));
         uploadPictureResult.setUrl(cosClientConfig.getHost() + "/" + uploadPath);
+        uploadPictureResult.setThumbnailUrl(cosClientConfig.getHost() + "/" + thumbnailImagePath);
+        uploadPictureResult.setPreviewUrl(cosClientConfig.getHost() + "/" + previewImagePath);
         return uploadPictureResult;
     }
 
     /**
      * 删除临时文件
      */
-    public void deleteTempFile(File file) {
-        if (file == null) {
+    public void deleteTempFile(File originalFile, File thumbnailImage, File previewImage) {
+        if (originalFile == null && thumbnailImage == null && previewImage == null) {
             return;
         }
-        boolean deleteResult = file.delete();
-        if (!deleteResult) {
-            log.error("file delete error, filepath = {}", file.getAbsolutePath());
+        boolean originalFileDelete = originalFile.delete();
+        boolean thumbnailImageDelete = thumbnailImage.delete();
+        boolean previewImageDelete = previewImage.delete();
+        if (!originalFileDelete || !thumbnailImageDelete || !previewImageDelete) {
+            log.error("file delete error, originalFilePath = {}", originalFile.getAbsolutePath());
         }
     }
 }
