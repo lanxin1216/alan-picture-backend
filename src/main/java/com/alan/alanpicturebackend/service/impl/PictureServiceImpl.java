@@ -2,6 +2,7 @@ package com.alan.alanpicturebackend.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -33,7 +34,10 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -42,6 +46,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -54,9 +59,6 @@ import java.util.stream.Collectors;
 public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         implements PictureService {
 
-//    @Resource
-//    private FileManager fileManager;
-
     @Resource
     private UserService userService;
 
@@ -65,6 +67,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     @Resource
     private UrlPictureUpload urlPictureUpload;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 图片上传
@@ -275,6 +280,62 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         pictureVOPage.setRecords(pictureVOList);
         // 返回图片分页的 VO 对象列表
         return pictureVOPage;
+    }
+
+    /**
+     * 获取图片分页 VO 列表（封装类）
+     *
+     * @param request             请求
+     * @param pictureQueryRequest 分页请求
+     * @return 返回详细分页 VO 列表
+     */
+    @Override
+    public Page<PictureVO> getListPictureVOByPage(PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
+        long current = pictureQueryRequest.getCurrent();
+        long size = pictureQueryRequest.getPageSize();
+        // 限制查询条数最大值，防止爬虫
+        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+        // 普通用户默认只能查看已过审的数据
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+
+        // 构建缓存 Key
+        String queryCondition = JSONUtil.toJsonStr(pictureQueryRequest); // 查询条件
+        String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
+        String redisKey = "alanPicture:listPictureVoByPage:" + hashKey; // 缓存键
+
+        // 查询 Redis 缓存
+        ValueOperations<String, String> valueOps = stringRedisTemplate.opsForValue();
+        String cachedValue = valueOps.get(redisKey);
+        if (cachedValue != null) {
+            // Redis 缓存中查询到
+            Page<PictureVO> cachedPage = JSONUtil.toBean(cachedValue, Page.class);
+            return cachedPage;
+        }
+
+        // 查询 数据库
+        Page<Picture> objectPage = new Page<>(current, size);
+        QueryWrapper<Picture> queryWrapper = this.getQueryWrapper(pictureQueryRequest);
+        Page<Picture> picturePage = this.page(objectPage, queryWrapper);
+        // 封装
+        Page<PictureVO> pictureVOPage = this.getPictureVOPage(picturePage, request);
+
+        // 添加 Redis 缓存
+        String cacheValue = JSONUtil.toJsonStr(pictureVOPage);
+        // 设置过期时间：5~10分钟随机 防止雪崩
+        int cacheExpireTime = 300 + RandomUtil.randomInt(0, 300); // 300秒 + 0到300秒随机
+        valueOps.set(redisKey, cacheValue, cacheExpireTime, TimeUnit.SECONDS);
+
+        return pictureVOPage;
+    }
+
+    @Override
+    public void updateListPictureVOCache() {
+        // 清除图片列表缓存
+        // 使用通配符匹配所有图片列表缓存
+        Set<String> redisKeys = stringRedisTemplate.keys("alanPicture:listPictureVoByPage:" + "*");
+        if (redisKeys != null) {
+            stringRedisTemplate.delete(redisKeys);
+        }
     }
 
     /**

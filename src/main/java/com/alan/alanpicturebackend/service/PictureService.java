@@ -10,7 +10,6 @@ import com.alan.alanpicturebackend.model.vo.PictureVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -59,6 +58,20 @@ public interface PictureService extends IService<Picture> {
      * @return 图片分页的 VO 对象列表
      */
     Page<PictureVO> getPictureVOPage(Page<Picture> picturePage, HttpServletRequest request);
+
+    /**
+     * 获取图片分页 VO 列表（封装类）
+     *
+     * @param request             请求
+     * @param pictureQueryRequest 分页请求
+     * @return 返回详细分页 VO 列表
+     */
+    Page<PictureVO> getListPictureVOByPage(PictureQueryRequest pictureQueryRequest, HttpServletRequest request);
+
+    /**
+     * 管理员刷新图片分页 VO列表redis缓存
+     */
+    void updateListPictureVOCache();
 
     /**
      * 图片数据校验，用于更新修改图片数据时

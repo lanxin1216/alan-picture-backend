@@ -4,7 +4,6 @@ import cn.hutool.json.JSONUtil;
 import com.alan.alanpicturebackend.annotation.AuthCheck;
 import com.alan.alanpicturebackend.common.BaseResponse;
 import com.alan.alanpicturebackend.common.DeleteRequest;
-import com.alan.alanpicturebackend.common.PageRequest;
 import com.alan.alanpicturebackend.common.ResultUtils;
 import com.alan.alanpicturebackend.constant.UserConstant;
 import com.alan.alanpicturebackend.exception.BusinessException;
@@ -198,23 +197,24 @@ public class PictureController {
      * 获取图片分页列表（封装类）
      *
      * @param pictureQueryRequest 分页请求
+     * @param request             请求
      * @return 返回详细分页 VO 列表
      */
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest, HttpServletRequest request) {
-        long current = pictureQueryRequest.getCurrent();
-        long size = pictureQueryRequest.getPageSize();
-        // 限制查询条数最大值，防止爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-        // 普通用户默认只能查看已过审的数据
-        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
-        // 查询
-        Page<Picture> objectPage = new Page<>(current, size);
-        QueryWrapper<Picture> queryWrapper = pictureService.getQueryWrapper(pictureQueryRequest);
-        Page<Picture> picturePage = pictureService.page(objectPage, queryWrapper);
-        // 封装
-        Page<PictureVO> pictureVOPage = pictureService.getPictureVOPage(picturePage, request);
-        return ResultUtils.success(pictureVOPage);
+        Page<PictureVO> listPictureVOByPage = pictureService.getListPictureVOByPage(pictureQueryRequest, request);
+        return ResultUtils.success(listPictureVOByPage);
+    }
+
+    /**
+     * 刷新图片分页 VO列表redis缓存（仅管理员）
+     * @return 返回清除结果
+     */
+    @PostMapping("/refresh/pageVoCache")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> updateListPictureVOCache() {
+        pictureService.updateListPictureVOCache();
+        return ResultUtils.success(true);
     }
 
     /**
