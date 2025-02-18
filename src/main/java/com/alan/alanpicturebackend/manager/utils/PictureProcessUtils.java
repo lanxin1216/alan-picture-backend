@@ -65,24 +65,39 @@ public class PictureProcessUtils {
      * - webp 格式
      *
      * @param originalImage 原图
+     * @param previewImage  生成的预览图
      */
     public void toPreviewImage(File originalImage, File previewImage) {
+        ImageWriter writer = null;
+        FileImageOutputStream outputStream = null;
         try {
             // 获取原始文件的编码
             BufferedImage image = ImageIO.read(originalImage);
             // 创建WebP ImageWriter实例
-            ImageWriter writer = ImageIO.getImageWritersByMIMEType("image/webp").next();
+            writer = ImageIO.getImageWritersByMIMEType("image/webp").next();
             // 配置编码参数
             WebPWriteParam writeParam = new WebPWriteParam(writer.getLocale());
-            // 设置压缩模式
             writeParam.setCompressionMode(WebPWriteParam.MODE_DEFAULT);
             // 配置ImageWriter输出
-            writer.setOutput(new FileImageOutputStream(previewImage));
+            outputStream = new FileImageOutputStream(previewImage);
+            writer.setOutput(outputStream);
             // 进行编码，重新生成新图片
             writer.write(null, new IIOImage(image, null, null), writeParam);
         } catch (IOException e) {
-            log.error("生成压缩图（预览图）失败", e);
+            log.error("生成压缩图（预览图）失败，原图路径：{}，预览图路径：{}", originalImage.getAbsolutePath(), previewImage.getAbsolutePath(), e);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成压缩图（预览图）失败");
+        } finally {
+            // 确保资源被正确关闭
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
+                } catch (IOException e) {
+                    log.error("关闭 FileImageOutputStream 时发生错误", e);
+                }
+            }
+            if (writer != null) {
+                writer.dispose();
+            }
         }
     }
 }
