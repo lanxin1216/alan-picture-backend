@@ -1,9 +1,6 @@
 package com.alan.alanpicturebackend.service;
 
-import com.alan.alanpicturebackend.model.dto.picture.PictureQueryRequest;
-import com.alan.alanpicturebackend.model.dto.picture.PictureReviewRequest;
-import com.alan.alanpicturebackend.model.dto.picture.PictureUploadByBatchRequest;
-import com.alan.alanpicturebackend.model.dto.picture.PictureUploadRequest;
+import com.alan.alanpicturebackend.model.dto.picture.*;
 import com.alan.alanpicturebackend.model.entity.Picture;
 import com.alan.alanpicturebackend.model.entity.User;
 import com.alan.alanpicturebackend.model.vo.PictureVO;
@@ -104,4 +101,28 @@ public interface PictureService extends IService<Picture> {
      * @return 返回抓取条数
      */
     Integer uploadPictureByBatch(PictureUploadByBatchRequest pictureUploadByBatchRequest, User loginUser);
+
+    /**
+     * 删除图片
+     *
+     * @param pictureId 图片id
+     * @param loginUser 登录用户
+     */
+    void deletePicture(long pictureId, User loginUser);
+
+    /**
+     * 编辑图片
+     *
+     * @param pictureEditRequest 编辑请求
+     * @param loginUser          登录用户
+     */
+    void editPicture(PictureEditRequest pictureEditRequest, User loginUser);
+
+    /**
+     * 校验图片权限
+     *
+     * @param longinUser 登录用户
+     * @param picture    图片
+     */
+    void checkPictureAuth(User longinUser, Picture picture);
 }

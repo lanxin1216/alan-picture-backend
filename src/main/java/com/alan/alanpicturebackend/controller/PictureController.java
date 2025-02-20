@@ -10,9 +10,11 @@ import com.alan.alanpicturebackend.exception.BusinessException;
 import com.alan.alanpicturebackend.exception.ErrorCode;
 import com.alan.alanpicturebackend.exception.ThrowUtils;
 import com.alan.alanpicturebackend.model.dto.picture.*;
+import com.alan.alanpicturebackend.model.dto.space.SpaceLevel;
 import com.alan.alanpicturebackend.model.entity.Picture;
 import com.alan.alanpicturebackend.model.entity.User;
 import com.alan.alanpicturebackend.model.enums.PictureReviewStatusEnum;
+import com.alan.alanpicturebackend.model.enums.SpaceLevelEnum;
 import com.alan.alanpicturebackend.model.vo.PictureTagCategory;
 import com.alan.alanpicturebackend.model.vo.PictureVO;
 import com.alan.alanpicturebackend.service.PictureService;
@@ -28,6 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author alan
@@ -88,17 +91,7 @@ public class PictureController {
         // 获取用户
         User loginUser = userService.getLoginUser(request);
         Long id = deleteRequest.getId();
-        // 判断图片是否存在
-        Picture oldPicture = pictureService.getById(id);
-        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
-        // 权限判断，本人或管理员
-        if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        }
-
-        // 操作数据库
-        boolean result = pictureService.removeById(id);
-        ThrowUtils.throwIf(!result, ErrorCode.SYSTEM_ERROR, "图片删除异常");
+        pictureService.deletePicture(id, loginUser);
         return ResultUtils.success(true);
     }
 
@@ -165,6 +158,12 @@ public class PictureController {
         // 查询数据
         Picture picture = pictureService.getById(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
+        // 空间权限校验
+        Long spaceId = picture.getSpaceId();
+        if (spaceId != null) {
+            User loginUser = userService.getLoginUser(request);
+            pictureService.checkPictureAuth(loginUser, picture);
+        }
         // 判断是否过审了
         if (!picture.getReviewStatus().equals(PictureReviewStatusEnum.PASS.getValue())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
@@ -208,6 +207,7 @@ public class PictureController {
 
     /**
      * 刷新图片分页 VO列表redis缓存（仅管理员）
+     *
      * @return 返回清除结果
      */
     @PostMapping("/refresh/pageVoCache")
@@ -225,30 +225,9 @@ public class PictureController {
         if (pictureEditRequest == null || pictureEditRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        // 在此处将实体类和 DTO 进行转换
-        Picture picture = new Picture();
-        BeanUtils.copyProperties(pictureEditRequest, picture);
-        // 注意将 list 转为 string
-        picture.setTags(JSONUtil.toJsonStr(pictureEditRequest.getTags()));
-        // 设置编辑时间
-        picture.setEditTime(new Date());
-        // 数据校验
-        pictureService.validPicture(picture);
         // 获取登录用户
         User loginUser = userService.getLoginUser(request);
-        // 判断是否存在
-        long id = pictureEditRequest.getId();
-        Picture oldPicture = pictureService.getById(id);
-        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
-        // 仅本人或管理员可编辑
-        if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-        }
-        // 补充审核参数
-        pictureService.fillReviewParams(picture, loginUser);
-        // 操作数据库
-        boolean result = pictureService.updateById(picture);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        pictureService.editPicture(pictureEditRequest, loginUser);
         return ResultUtils.success(true);
     }
 
@@ -300,4 +279,21 @@ public class PictureController {
         return ResultUtils.success(count);
     }
 
+    /**
+     * 获取空间级别信息
+     *
+     * @return 返回空间级别列表
+     */
+    @GetMapping("/list/level")
+    public BaseResponse<List<SpaceLevel>> listSpaceLevel() {
+        List<SpaceLevel> spaceLevelList = Arrays.stream(SpaceLevelEnum.values())
+                .map(SpaceLevelEnum -> new SpaceLevel(
+                        SpaceLevelEnum.getValue(),
+                        SpaceLevelEnum.getText(),
+                        SpaceLevelEnum.getMaxCount(),
+                        SpaceLevelEnum.getMaxSize()
+                ))
+                .collect(Collectors.toList());
+        return ResultUtils.success(spaceLevelList);
+    }
 }
