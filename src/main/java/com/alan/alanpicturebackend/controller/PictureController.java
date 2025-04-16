@@ -2,6 +2,8 @@ package com.alan.alanpicturebackend.controller;
 
 import cn.hutool.json.JSONUtil;
 import com.alan.alanpicturebackend.annotation.AuthCheck;
+import com.alan.alanpicturebackend.api.imagesearch.ImageSearchApiFacade;
+import com.alan.alanpicturebackend.api.imagesearch.model.ImageSearchResult;
 import com.alan.alanpicturebackend.common.BaseResponse;
 import com.alan.alanpicturebackend.common.DeleteRequest;
 import com.alan.alanpicturebackend.common.ResultUtils;
@@ -296,4 +298,19 @@ public class PictureController {
                 .collect(Collectors.toList());
         return ResultUtils.success(spaceLevelList);
     }
+
+    /**
+     * 以图搜图
+     */
+    @PostMapping("/search/picture")
+    public BaseResponse<List<ImageSearchResult>> searchPictureByPicture(@RequestBody SearchPictureByPictureRequest searchPictureByPictureRequest) {
+        ThrowUtils.throwIf(searchPictureByPictureRequest == null, ErrorCode.PARAMS_ERROR);
+        Long pictureId = searchPictureByPictureRequest.getPictureId();
+        ThrowUtils.throwIf(pictureId == null || pictureId <= 0, ErrorCode.PARAMS_ERROR);
+        Picture oldPicture = pictureService.getById(pictureId);
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        List<ImageSearchResult> resultList = ImageSearchApiFacade.searchImage(oldPicture.getUrl());
+        return ResultUtils.success(resultList);
+    }
+
 }
