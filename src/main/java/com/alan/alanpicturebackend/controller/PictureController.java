@@ -1,7 +1,10 @@
 package com.alan.alanpicturebackend.controller;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alan.alanpicturebackend.annotation.AuthCheck;
+import com.alan.alanpicturebackend.api.aliyunai.model.CreateOutPaintingTaskResponse;
+import com.alan.alanpicturebackend.api.aliyunai.model.GetOutPaintingTaskResponse;
 import com.alan.alanpicturebackend.api.imagesearch.ImageSearchApiFacade;
 import com.alan.alanpicturebackend.api.imagesearch.model.ImageSearchResult;
 import com.alan.alanpicturebackend.common.BaseResponse;
@@ -311,6 +314,31 @@ public class PictureController {
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
         List<ImageSearchResult> resultList = ImageSearchApiFacade.searchImage(oldPicture.getUrl());
         return ResultUtils.success(resultList);
+    }
+
+    /**
+     * 创建 AI 扩图任务
+     */
+    @PostMapping("/out_painting/create_task")
+    public BaseResponse<CreateOutPaintingTaskResponse> createPictureOutPaintingTask(
+            @RequestBody CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest,
+            HttpServletRequest request) {
+        if (createPictureOutPaintingTaskRequest == null || createPictureOutPaintingTaskRequest.getPictureId() == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        CreateOutPaintingTaskResponse response = pictureService.createPictureOutPaintingTask(createPictureOutPaintingTaskRequest, loginUser);
+        return ResultUtils.success(response);
+    }
+
+    /**
+     * 查询 AI 扩图任务
+     */
+    @GetMapping("/out_painting/get_task")
+    public BaseResponse<GetOutPaintingTaskResponse> getPictureOutPaintingTask(String taskId) {
+        ThrowUtils.throwIf(StrUtil.isBlank(taskId), ErrorCode.PARAMS_ERROR);
+        GetOutPaintingTaskResponse task = pictureService.getCreatePictureOutPaintingTaskRequest(taskId);
+        return ResultUtils.success(task);
     }
 
 }

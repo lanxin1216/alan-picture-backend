@@ -1,5 +1,7 @@
 package com.alan.alanpicturebackend.service;
 
+import com.alan.alanpicturebackend.api.aliyunai.model.CreateOutPaintingTaskResponse;
+import com.alan.alanpicturebackend.api.aliyunai.model.GetOutPaintingTaskResponse;
 import com.alan.alanpicturebackend.model.dto.picture.*;
 import com.alan.alanpicturebackend.model.entity.Picture;
 import com.alan.alanpicturebackend.model.entity.User;
@@ -125,4 +127,21 @@ public interface PictureService extends IService<Picture> {
      * @param picture    图片
      */
     void checkPictureAuth(User longinUser, Picture picture);
+
+    /**
+     * ai扩图任务请求
+     *
+     * @param createPictureOutPaintingTaskRequest 扩图任务请求参数
+     * @param loginUser                           请求用户
+     * @return 返回任务状态
+     */
+    CreateOutPaintingTaskResponse createPictureOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser);
+
+    /**
+     * 查询ai 扩图任务情况
+     *
+     * @param taskId 任务 id
+     * @return 返回任务状态
+     */
+    GetOutPaintingTaskResponse getCreatePictureOutPaintingTaskRequest(String taskId);
 }

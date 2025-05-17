@@ -54,6 +54,11 @@ public abstract class PictureUploadTemplate {
         String originFileSuffix = FileUtil.getSuffix(originFilename);
         String uploadTime = DateUtil.formatDate(new Date());   // 上传时间
 
+        // 优化百炼ai扩图功能，去掉？参数
+        if (originFileSuffix.contains("?")) {
+            originFileSuffix = originFileSuffix.split("\\?")[0];
+        }
+
         // 原始图片上传图片名称
         String uploadFilename = String.format("%s_%s.%s", uploadTime, uuid, originFileSuffix);
         // 缩略图名称
@@ -71,7 +76,7 @@ public abstract class PictureUploadTemplate {
         File previewImage = null;  // 压缩图（预览图）
         try {
             // 3. 创建临时文件
-            originalFile = File.createTempFile( "originalImage", "." + originFileSuffix);
+            originalFile = File.createTempFile("originalImage", "." + originFileSuffix);
             thumbnailImage = File.createTempFile("thumbnailImage", "." + originFileSuffix);
             previewImage = File.createTempFile("previewImage", ".webp");
 

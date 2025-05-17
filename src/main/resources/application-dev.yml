@@ -6,3 +6,7 @@ cos:
     secretKey: xxx
     region: xxx
     bucket: xxx
+
+# 阿里云百炼ai
+aliyun:
+  apiKey: sk-xxx
