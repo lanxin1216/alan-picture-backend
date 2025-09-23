@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alan.alanpicturebackend.exception.BusinessException;
 import com.alan.alanpicturebackend.exception.ErrorCode;
+import com.alan.alanpicturebackend.manager.auth.StpKit;
 import com.alan.alanpicturebackend.model.dto.user.UserQueryRequest;
 import com.alan.alanpicturebackend.model.enums.UserRoleEnum;
 import com.alan.alanpicturebackend.model.vo.LoginUserVO;
@@ -129,6 +130,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         // 3. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
+
+        // 4. 记录用户登录态到 Sa-token，便于空间鉴权时使用
+        StpKit.SPACE.login(user.getId());
+        StpKit.SPACE.getSession().set(USER_LOGIN_STATE, user);
         return this.getLoginUserVO(user);
     }
 

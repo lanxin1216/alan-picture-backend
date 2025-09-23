@@ -8,6 +8,7 @@ import com.alan.alanpicturebackend.constant.UserConstant;
 import com.alan.alanpicturebackend.exception.BusinessException;
 import com.alan.alanpicturebackend.exception.ErrorCode;
 import com.alan.alanpicturebackend.exception.ThrowUtils;
+import com.alan.alanpicturebackend.manager.auth.SpaceUserAuthManager;
 import com.alan.alanpicturebackend.model.dto.space.SpaceAddRequest;
 import com.alan.alanpicturebackend.model.dto.space.SpaceEditRequest;
 import com.alan.alanpicturebackend.model.dto.space.SpaceQueryRequest;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author alan
@@ -39,6 +41,9 @@ public class SpaceController {
 
     @Resource
     private SpaceService spaceService;
+
+    @Resource
+    private SpaceUserAuthManager spaceUserAuthManager;
 
     /**
      * 创建空间
@@ -140,6 +145,9 @@ public class SpaceController {
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR);
         // 封装数据
         SpaceVO spaceVO = spaceService.getSpaceVO(space, request);
+        User loginUser = userService.getLoginUser(request);
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
+        spaceVO.setPermissionList(permissionList);
         // 返回
         return ResultUtils.success(spaceVO);
     }
