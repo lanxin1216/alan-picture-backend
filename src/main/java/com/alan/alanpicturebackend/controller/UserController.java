@@ -87,6 +87,20 @@ public class UserController {
     }
 
     /**
+     * 修改用户密码（用户）
+     *
+     * @param userUpdatePasswordRequest 修改密码请求
+     * @return 密码修改结果
+     */
+    @PostMapping("/update/password")
+    public BaseResponse<Boolean> userUpdatePassword(@RequestBody UserUpdatePasswordRequest userUpdatePasswordRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(userUpdatePasswordRequest == null, ErrorCode.PARAMS_ERROR);
+
+        boolean result = userService.userUpdatePassword(userUpdatePasswordRequest, request);
+        return ResultUtils.success(result);
+    }
+
+    /**
      * 添加用户 (管理员）
      *
      * @param userAddRequest 用户添加请求

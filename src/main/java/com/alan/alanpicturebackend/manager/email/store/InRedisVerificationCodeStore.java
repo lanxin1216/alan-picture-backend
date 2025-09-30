@@ -17,16 +17,16 @@ public class InRedisVerificationCodeStore {
     private final RedisTemplate<String, String> redisTemplate;
 
     // Redis key 前缀
-    private static final String VERIFICATION_CODE_PREFIX = "verification_code:";
+    private static final String VERIFICATION_CODE_PREFIX = "email:verification_code:";
+
+    // 发送间隔key前缀
+    private static final String SEND_INTERVAL_PREFIX = "email:send_interval:";
 
     // 验证码过期时间（分钟）
     private static final long CODE_EXPIRE_MINUTES = 5;
 
     // 发送间隔时间（秒）
     private static final long SEND_INTERVAL_SECONDS = 60;
-
-    // 发送间隔key前缀
-    private static final String SEND_INTERVAL_PREFIX = "send_interval:";
 
     @Autowired
     public InRedisVerificationCodeStore(RedisTemplate<String, String> redisTemplate) {

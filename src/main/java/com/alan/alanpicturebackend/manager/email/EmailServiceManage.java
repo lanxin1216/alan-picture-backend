@@ -37,20 +37,20 @@ public class EmailServiceManage {
     @Resource
     private TemplateEngine templateEngine;
 
+    // 发件人邮箱
     @Value("${spring.mail.username}")
     private String from;
-
-    @Value("${email.verification.subject}")
-    private String subject;
-
-    @Value("${email.verification.template-name}")
-    private String templateName;
-
-    @Value("${email.verification.from-name}")
-    private String fromName;
-
+    // 邮件主题
+    private static final String SUBJECT = "【屿图】邮箱验证码";
+    // 邮件模板名称(HTML:templates/email-verification.html)
+    private static final String TEMPLATE_NAME = "email-template";
+    // 邮件发件人名称
+    private static final String FROM_NAME = "屿图";
+    // 验证码字符集
     private static final String CODE_CHARACTERS = "0123456789";
+    // 验证码长度
     private static final int CODE_LENGTH = 6;
+    // 随机数生成器
     private static final SecureRandom random = new SecureRandom();
 
     /**
@@ -94,9 +94,9 @@ public class EmailServiceManage {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             // 设置邮件基本信息
-            InternetAddress fromAddress = new InternetAddress(from, fromName);
+            InternetAddress fromAddress = new InternetAddress(from, FROM_NAME);
             helper.setFrom(fromAddress);
-            helper.setSubject(subject);
+            helper.setSubject(SUBJECT);
             helper.setTo(email);
 
             // 准备模板变量
@@ -107,7 +107,7 @@ public class EmailServiceManage {
             // 使用Thymeleaf模板生成HTML内容
             Context context = new Context();
             context.setVariables(variables);
-            String htmlContent = templateEngine.process(templateName, context);
+            String htmlContent = templateEngine.process(TEMPLATE_NAME, context);
 
             // 设置HTML内容，第二个参数true表示启用HTML格式
             helper.setText(htmlContent, true);

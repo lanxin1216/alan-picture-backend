@@ -10,6 +10,7 @@ import com.alan.alanpicturebackend.manager.auth.StpKit;
 import com.alan.alanpicturebackend.manager.email.EmailServiceManage;
 import com.alan.alanpicturebackend.model.dto.user.UserQueryRequest;
 import com.alan.alanpicturebackend.model.dto.user.UserRegisterRequest;
+import com.alan.alanpicturebackend.model.dto.user.UserUpdatePasswordRequest;
 import com.alan.alanpicturebackend.model.enums.UserRoleEnum;
 import com.alan.alanpicturebackend.model.vo.LoginUserVO;
 import com.alan.alanpicturebackend.model.vo.UserVO;
@@ -214,6 +215,65 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 移除登录态
         request.getSession().removeAttribute(USER_LOGIN_STATE);
         return true;
+    }
+
+    /**
+     * 修改用户密码
+     *
+     * @param userUpdatePasswordRequest 修改密码请求
+     * @return 修改结果
+     */
+    @Override
+    public boolean userUpdatePassword(UserUpdatePasswordRequest userUpdatePasswordRequest, HttpServletRequest request) {
+        String email = userUpdatePasswordRequest.getEmail();
+        String verificationCode = userUpdatePasswordRequest.getVerificationCode();
+        String oldPassword = userUpdatePasswordRequest.getOldPassword();
+        String newPassword = userUpdatePasswordRequest.getNewPassword();
+        String checkNewPassword = userUpdatePasswordRequest.getCheckNewPassword();
+
+        // 判断用户是否登录
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        if (userObj == null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
+        }
+        User currentUser = (User) userObj;
+        // 验证邮箱是否和当前登录用户一致
+        if (!currentUser.getEmail().equals(email)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请输入正确的邮箱");
+        }
+
+        if (!emailService.validateEmail(email)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请输入正确的邮箱");
+        }
+        if (oldPassword.length() < 8 || newPassword.length() < 8 || checkNewPassword.length() < 8) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码错误或密码过短");
+        }
+        if (!newPassword.equals(checkNewPassword)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入新密码不一致");
+        }
+        // 验证验证码
+        if (!emailService.verifyEmailCode(email, verificationCode)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "验证码错误");
+        }
+        // 验证旧密码
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("email", email);
+        User user = this.baseMapper.selectOne(queryWrapper);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
+        }
+        if (!getEncryptPassword(oldPassword).equals(user.getUserPassword())) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "旧密码错误");
+        }
+        user.setUserPassword(getEncryptPassword(newPassword));
+        int update = this.baseMapper.update(user, queryWrapper);
+        if (update > 0) {
+            // 移除登录态
+            request.getSession().removeAttribute(USER_LOGIN_STATE);
+            return true;
+        } else {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "修改密码失败");
+        }
     }
 
     /**

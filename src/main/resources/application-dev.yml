@@ -39,10 +39,3 @@ cos:
 # 阿里云百炼ai
 aliyun:
   apiKey: sk-xxx
-
-# 邮件验证码
-email:
-  verification:
-    subject: "'屿图' - 邮箱验证"
-    template-name: "email-template" # 对应 templates/email-verification.html
-    from-name: "屿图"

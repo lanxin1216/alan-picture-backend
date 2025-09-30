@@ -2,6 +2,7 @@ package com.alan.alanpicturebackend.service;
 
 import com.alan.alanpicturebackend.model.dto.user.UserQueryRequest;
 import com.alan.alanpicturebackend.model.dto.user.UserRegisterRequest;
+import com.alan.alanpicturebackend.model.dto.user.UserUpdatePasswordRequest;
 import com.alan.alanpicturebackend.model.entity.User;
 import com.alan.alanpicturebackend.model.vo.LoginUserVO;
 import com.alan.alanpicturebackend.model.vo.UserVO;
@@ -66,6 +67,14 @@ public interface UserService extends IService<User> {
      * @return
      */
     boolean userLogout(HttpServletRequest request);
+
+    /**
+     * 修改用户密码
+     *
+     * @param userUpdatePasswordRequest 修改密码请求
+     * @return 修改结果
+     */
+    boolean userUpdatePassword(UserUpdatePasswordRequest userUpdatePasswordRequest,HttpServletRequest request);
 
     /**
      * 获取脱敏的用户信息
