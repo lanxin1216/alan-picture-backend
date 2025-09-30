@@ -17,5 +17,8 @@ public interface EmailService {
      */
     boolean verifyEmailCode(String email, String code);
 
+    /**
+     * 校验邮箱
+     */
     boolean validateEmail(String email);
 }

@@ -6,6 +6,7 @@ import com.alan.alanpicturebackend.exception.ErrorCode;
 import com.alan.alanpicturebackend.exception.ThrowUtils;
 import com.alan.alanpicturebackend.model.dto.email.EmailVerificationRequest;
 import com.alan.alanpicturebackend.service.EmailService;
+import com.alan.alanpicturebackend.service.UserService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,7 +26,9 @@ public class EmailController {
     private EmailService emailService;
 
     /**
-     * 电子邮箱发送验证码
+     * 发送邮箱验证码
+     * @param emailVerificationRequest
+     * @return
      */
     @PostMapping("/verification")
     public BaseResponse<Boolean> userEmailVerification(@RequestBody EmailVerificationRequest emailVerificationRequest) {

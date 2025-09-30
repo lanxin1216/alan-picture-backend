@@ -8,12 +8,14 @@ import com.alan.alanpicturebackend.constant.UserConstant;
 import com.alan.alanpicturebackend.exception.BusinessException;
 import com.alan.alanpicturebackend.exception.ErrorCode;
 import com.alan.alanpicturebackend.exception.ThrowUtils;
+import com.alan.alanpicturebackend.model.dto.email.EmailVerificationRequest;
 import com.alan.alanpicturebackend.model.dto.user.*;
 import com.alan.alanpicturebackend.model.entity.User;
 import com.alan.alanpicturebackend.model.vo.LoginUserVO;
 import com.alan.alanpicturebackend.model.vo.UserVO;
 import com.alan.alanpicturebackend.service.EmailService;
 import com.alan.alanpicturebackend.service.UserService;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +36,9 @@ public class UserController {
     @Resource
     private UserService userService;
 
+    @Resource
+    private EmailService emailService;
+
     /**
      * 用户注册
      */
@@ -42,6 +47,24 @@ public class UserController {
         ThrowUtils.throwIf(userRegisterRequest == null, ErrorCode.PARAMS_ERROR);
         long result = userService.userRegister(userRegisterRequest);
         return ResultUtils.success(result);
+    }
+
+    /**
+     * 用户注册： 用户邮箱验证码发送
+     */
+    @PostMapping("/register/verification")
+    public BaseResponse<Boolean> userRegisterEmailVerification(@RequestBody EmailVerificationRequest emailVerificationRequest) {
+        ThrowUtils.throwIf(emailVerificationRequest == null, ErrorCode.PARAMS_ERROR);
+        String email = emailVerificationRequest.getEmail();
+        // 检查账户邮箱是否存在（是否存在邮箱）
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("email", email);
+        long count = userService.count(queryWrapper);
+        if (count > 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "该邮箱已被注册");
+        }
+        emailService.sendEmailVerificationCode(email);
+        return ResultUtils.success(true);
     }
 
     /**

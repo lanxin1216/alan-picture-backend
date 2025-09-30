@@ -21,7 +21,7 @@ import java.util.Map;
 
 /**
  * @author alanK
- * @Description: 邮件服务管理实现类
+ * @Description: 邮件服务管理类
  * @Date: 2025/9/29 17:22
  */
 @Component
