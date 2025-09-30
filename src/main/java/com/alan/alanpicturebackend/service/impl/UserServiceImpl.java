@@ -7,10 +7,13 @@ import cn.hutool.core.util.StrUtil;
 import com.alan.alanpicturebackend.exception.BusinessException;
 import com.alan.alanpicturebackend.exception.ErrorCode;
 import com.alan.alanpicturebackend.manager.auth.StpKit;
+import com.alan.alanpicturebackend.manager.email.EmailServiceManage;
 import com.alan.alanpicturebackend.model.dto.user.UserQueryRequest;
+import com.alan.alanpicturebackend.model.dto.user.UserRegisterRequest;
 import com.alan.alanpicturebackend.model.enums.UserRoleEnum;
 import com.alan.alanpicturebackend.model.vo.LoginUserVO;
 import com.alan.alanpicturebackend.model.vo.UserVO;
+import com.alan.alanpicturebackend.service.EmailService;
 import com.alan.alanpicturebackend.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -21,6 +24,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
@@ -38,22 +42,31 @@ import static com.alan.alanpicturebackend.constant.UserConstant.USER_LOGIN_STATE
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
+    @Resource
+    private EmailService emailService;
+
     /**
      * 用户注册
      *
-     * @param userAccount   用户账户
-     * @param userPassword  用户密码
-     * @param checkPassword 确认密码
      * @return 新用户 id
      */
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword) {
+    public long userRegister(UserRegisterRequest userRegisterRequest) {
+        String userAccount = userRegisterRequest.getUserAccount();
+        String email = userRegisterRequest.getEmail();
+        String verificationCode = userRegisterRequest.getVerificationCode();
+        String userPassword = userRegisterRequest.getUserPassword();
+        String checkPassword = userRegisterRequest.getCheckPassword();
+
 //        1.参数校验
         if (StrUtil.hasBlank(userAccount, userPassword, checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
+        if (StrUtil.hasBlank(email, verificationCode)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱或验证码为空");
+        }
         if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账户过短");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账户过短,至少四位");
         }
         if (userPassword.length() < 8 || checkPassword.length() < 8) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
@@ -61,20 +74,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!userPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次密码不一致");
         }
-//        2.检查账户是否重复
+
+//        2.检查账户邮箱是否存在（是否存在邮箱）
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("userAccount", userAccount);
+        queryWrapper.eq("email", email);
         Long count = this.baseMapper.selectCount(queryWrapper);
         if (count > 0) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账户已存在");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "该邮箱已被注册");
         }
-        // 3.密码加密
+
+        // 3.校验邮箱验证码
+        if (!emailService.verifyEmailCode(email, verificationCode)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "邮箱验证码错误");
+        }
+
+        // 4.密码加密
         String encryptPassword = getEncryptPassword(userPassword);
-        // 4.插入数据
+        // 5.插入数据
         User user = new User();
         user.setUserAccount(userAccount);
         user.setUserPassword(encryptPassword);
         user.setUserName(userAccount);
+        user.setEmail(email);
         user.setUserRole(UserRoleEnum.USER.getValue());
         boolean saveResult = this.save(user);
         if (!saveResult) {
@@ -92,26 +113,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public String getEncryptPassword(String userPassword) {
         // 加盐值
-        final String SALT = "alan#Alan";
+        final String SALT = "yutualank#alank&";
         return DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
     }
 
     /**
      * 用户登录
      *
-     * @param userAccount  用户账户
+     * @param userEmail  用户邮箱
      * @param userPassword 用户密码
      * @param request      请求
      * @return 返回用户脱敏信息
      */
     @Override
-    public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
+    public LoginUserVO userLogin(String userEmail, String userPassword, HttpServletRequest request) {
         // 1. 校验
-        if (StrUtil.hasBlank(userAccount, userPassword)) {
+        if (StrUtil.hasBlank(userEmail, userPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
-        if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号错误");
+        if (!emailService.validateEmail(userEmail)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请输入正确的邮箱");
         }
         if (userPassword.length() < 8) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码错误");
@@ -120,7 +141,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String encryptPassword = getEncryptPassword(userPassword);
         // 查询用户是否存在
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("userAccount", userAccount);
+        queryWrapper.eq("email", userEmail);
         queryWrapper.eq("userPassword", encryptPassword);
         User user = this.baseMapper.selectOne(queryWrapper);
         // 用户不存在

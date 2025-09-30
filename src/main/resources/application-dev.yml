@@ -1,3 +1,32 @@
+# 开发环境配置
+spring:
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/alan_picture
+    username: root
+    password: xx
+  # Redis 配置
+  redis:
+    database: 0
+    host: 127.0.0.1
+    port: 6379
+    timeout: 5000
+  # 邮件配置
+  mail:
+    host: smtp.163.com
+    port: 465  # 465:SSL & 587:TLS/STARTTLS
+    protocol: smtp
+    default-encoding: UTF-8
+    username: xxx@163.com
+    password: xxx
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+
 # 对象存储配置
 cos:
   client:
@@ -10,3 +39,10 @@ cos:
 # 阿里云百炼ai
 aliyun:
   apiKey: sk-xxx
+
+# 邮件验证码
+email:
+  verification:
+    subject: "'屿图' - 邮箱验证"
+    template-name: "email-template" # 对应 templates/email-verification.html
+    from-name: "屿图"

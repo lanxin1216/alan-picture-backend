@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>屿图 - 邮箱验证</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            line-height: 1.5;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            padding: 10px 0;
+            margin: 0;
+        }
+
+        .email-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(64, 169, 255, 0.1);
+        }
+
+        .email-header {
+            background: linear-gradient(135deg, #40A9FF 0%, #66BAFF 100%);
+            padding: 20px 15px;
+            text-align: center;
+            position: relative;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon::before {
+            content: "📸";
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 26px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: 0.5px;
+        }
+
+        .tagline {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .email-body {
+            padding: 15px 20px;
+        }
+
+        .greeting {
+            font-size: 20px;
+            color: #111827;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .greeting strong {
+            color: #40A9FF;
+        }
+
+        .instruction {
+            margin-bottom: 5px;
+            color: #4B5563;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .verification-code {
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px 5px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 2px dashed #cbd5e1;
+        }
+
+        .code {
+            font-family: 'Courier New', monospace;
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            color: #1e293b;
+            display: inline-block;
+            background: linear-gradient(135deg, #40A9FF, #66BAFF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .expiry-notice {
+            color: #ef4444;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: #fef2f2;
+            border-radius: 6px;
+            border-left: 4px solid #ef4444;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .welcome-message {
+            background: #f0f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #40A9FF;
+        }
+
+        .welcome-message h3 {
+            color: #0369a1;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+        }
+
+        .welcome-message h3::before {
+            content: "✨";
+            margin-right: 8px;
+        }
+
+        .welcome-message p {
+            margin-bottom: 8px;
+            color: #0c4a6e;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .footer-note {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 10px 0;
+            color: #856404;
+            font-size: 13px;
+        }
+
+        .email-footer {
+            background: #f8fafc;
+            padding: 10px 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                width: 95% !important;
+                border-radius: 10px;
+            }
+
+            .email-body {
+                padding: 10px 15px !important;
+            }
+
+            .email-header {
+                padding: 15px 10px !important;
+            }
+
+            .logo-text {
+                font-size: 22px !important;
+            }
+
+            .greeting {
+                font-size: 18px !important;
+            }
+
+            .code {
+                font-size: 28px !important;
+                letter-spacing: 4px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+        <td align="center" style="padding: 20px 0;">
+            <!-- Email Container -->
+            <table class="email-container" border="0" cellpadding="0" cellspacing="0" width="600">
+                <!-- Header -->
+                <tr>
+                    <td class="email-header">
+                        <div class="logo-container">
+                            <div class="logo-icon"></div>
+                            <div class="logo-text">屿图</div>
+                        </div>
+                        <div class="tagline">发现与分享你的光影岛屿</div>
+                    </td>
+                </tr>
+
+                <!-- Body -->
+                <tr>
+                    <td class="email-body">
+                        <div class="greeting">
+                            尊敬的用户，您好！
+                        </div>
+
+                        <div class="instruction">
+                            <p>您正在"屿图"平台进行邮箱验证，请使用以下验证码完成操作：</p>
+                        </div>
+
+                        <div class="verification-code">
+                            <div th:text="${code}" class="code">123456</div>
+                        </div>
+
+                        <div class="expiry-notice">
+                            请在 5 分钟内完成验证，验证码过期后将失效
+                        </div>
+
+                        <div class="welcome-message">
+                            <h3>欢迎加入屿图</h3>
+                            <p>屿图的诞生，源于一个简单的愿望：为漂泊在数字世界的视觉记忆，建造一座温暖的岛屿。</p>
+                        </div>
+
+                        <div class="footer-note">
+                            ⚠️ 安全提示：请勿将验证码泄露给他人。如非本人操作，请立即忽略此邮件。
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td class="email-footer">
+                        <p>© <span th:text="${year}">2025</span> 屿图 . 版权所有.</p>
+                        <p>本邮件由系统自动发送，请勿直接回复</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
