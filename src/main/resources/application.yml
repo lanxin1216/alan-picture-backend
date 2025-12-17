@@ -35,7 +35,7 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
     # 仅在开发环境打开日志
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   # 全局逻辑删除配置
   global-config:
     db-config:
